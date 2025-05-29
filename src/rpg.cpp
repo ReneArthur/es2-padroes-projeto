@@ -126,9 +126,6 @@ class ConstrutorHumano: public Construtor {
         using Construtor::Construtor;
 
         void produzirAtributos() override {
-            /*
-            Um humano ganha +2 em 3 atributos diferentes
-            */
             personagem.forca += 2;
             personagem.destreza += 2;
             personagem.constituicao += 2;
@@ -144,10 +141,8 @@ class ConstrutorElfo: public Construtor {
     public:
         //puxando o construtor do Construtor
         using Construtor::Construtor;
+
         void produzirAtributos() override {
-            /*
-            Um humano ganha +2 em 3 atributos diferentes
-            */
             personagem.inteligencia += 4;
             personagem.destreza += 2;
             personagem.constituicao -= 2;

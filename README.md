@@ -212,5 +212,7 @@ int main() {
 
     Personagem p1 = cc1.getPersonagem();
     p1.imprimir();
+
+    return 0;
 }
 ```

@@ -4,7 +4,7 @@ Linguagem escolhida: C++
 
 **Sumário**
 - [Sobre o projeto](#Sobre-o-projeto)
-- [Padrão Criacional: Builder](#Padrao-Criacional:-Builder)
+- [Padrão Criacional: Builder](#Padrao-Criacional-Builder)
 
 ## Sobre o projeto
 O projeto é sobre criação de personagens, de RPG de mesa, de nível 1, utilizando as regras do livro Tormenta20.

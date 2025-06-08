@@ -1,8 +1,6 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
-using namespace std;
-
 
 // enum Atributos {
 //     FORCA,
@@ -25,20 +23,20 @@ using namespace std;
 
 class Habilidade {
     public:
-        Habilidade(string nome, string descricacao) {
+        Habilidade(std::string nome, std::string descricacao) {
             this->nome = nome;
             this->descricao = descricacao;
         }
-        string nome;
-        string descricao;
+        std::string nome;
+        std::string descricao;
 };
 
 class Personagem {
     public:
         Personagem() {}
         void imprimir() {
-            cout << "--------\n";
-            cout << "Nome: " << nome << "\n"
+            std::cout << "--------\n";
+            std::cout << "Nome: " << nome << "\n"
             << "raça: " << raca << "\n"
             << "vida: " << vida << " | mana: " << mana << "\n\n"
             << "ATRIBUTOS:\n"
@@ -52,10 +50,10 @@ class Personagem {
             << "Habilidades: \n";
 
             for(const Habilidade& hab: habilidades) {
-                cout << "nome: " << hab.nome << "\ndescrição: " << hab.descricao << "\n\n";
+                std::cout << "nome: " << hab.nome << "\ndescrição: " << hab.descricao << "\n\n";
             }
 
-            cout << "--------\n";
+            std::cout << "--------\n";
         }
         void setAtributos(int forc, int dest, int cons, int inte, int sabe, int cari) {
             this->forca = forc;
@@ -86,9 +84,9 @@ class Personagem {
         int getModificacaoCarisma() {
             return getModificacador(carisma);
         }
-        string nome;
+        std::string nome;
 
-        string raca;
+        std::string raca;
 
         int forca;
         int destreza;
@@ -103,12 +101,12 @@ class Personagem {
         int getModificacador(int valor) {
             return floor((float)(valor - 10) / 2);
         }
-        vector<Habilidade> habilidades;  
+        std::vector<Habilidade> habilidades;  
 };
 
 class Construtor {
     public:
-        Construtor(string nome, int forc, int dest, int cons, int inte, int sabe, int cari) {
+        Construtor(std::string nome, int forc, int dest, int cons, int inte, int sabe, int cari) {
             personagem.setAtributos(forc, dest, cons, inte, sabe, cari);
             personagem.nome = nome;
         };

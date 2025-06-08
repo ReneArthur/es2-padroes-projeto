@@ -39,6 +39,7 @@ class Personagem {
         void imprimir() {
             cout << "--------\n";
             cout << "Nome: " << nome << "\n"
+            << "raça: " << raca << "\n"
             << "vida: " << vida << " | mana: " << mana << "\n\n"
             << "ATRIBUTOS:\n"
             << "forca: " << forca << "\n"
@@ -87,6 +88,8 @@ class Personagem {
         }
         string nome;
 
+        string raca;
+
         int forca;
         int destreza;
         int constituicao;
@@ -109,6 +112,7 @@ class Construtor {
             personagem.setAtributos(forc, dest, cons, inte, sabe, cari);
             personagem.nome = nome;
         };
+        virtual void setRaca() = 0;
         virtual void produzirAtributos() = 0;
         virtual void produzirHabilidadesRaca() = 0;
         void adicionarHabilidadeExtra(Habilidade hab) {
@@ -124,6 +128,10 @@ class ConstrutorHumano: public Construtor {
     public:
         //puxando o construtor do Construtor
         using Construtor::Construtor;
+
+        void setRaca() override {
+            personagem.raca = "Humano";
+        }
 
         void produzirAtributos() override {
             personagem.forca += 2;
@@ -141,6 +149,10 @@ class ConstrutorElfo: public Construtor {
     public:
         //puxando o construtor do Construtor
         using Construtor::Construtor;
+    
+        void setRaca() override {
+            personagem.raca = "Elfo";
+        }
 
         void produzirAtributos() override {
             personagem.inteligencia += 4;
@@ -163,8 +175,8 @@ class ConstrutorElfo: public Construtor {
 class Diretor {
     public:
         void construirCavaleiro(Construtor& builder) {
-            builder.produzirAtributos();
-            builder.produzirHabilidadesRaca();
+            construirBasePersonagem(builder);
+
             builder.adicionarHabilidadeExtra(
                 Habilidade("Código de honra", "Você não pode atacar um inimigo pelas costas")
             );
@@ -175,8 +187,8 @@ class Diretor {
             builder.personagem.mana = 3;
         }
         void construirLadino(Construtor& builder) {
-            builder.produzirAtributos();
-            builder.produzirHabilidadesRaca();
+            construirBasePersonagem(builder);
+
             builder.adicionarHabilidadeExtra(
                 Habilidade("Ataque furtivo", "1d6 de dano adicional ao ataque furtivo")
             );
@@ -185,6 +197,12 @@ class Diretor {
             );
             builder.personagem.vida = 12 + builder.personagem.getModificacaoConstituicao(); 
             builder.personagem.mana = 4;
+        }
+    private:
+        void construirBasePersonagem(Construtor& builder) {
+            builder.setRaca();
+            builder.produzirAtributos();
+            builder.produzirHabilidadesRaca();
         }
 };
 

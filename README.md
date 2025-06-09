@@ -5,13 +5,13 @@ Linguagem escolhida: C++
 **Sumário**
 - [Sobre o projeto](#Sobre-o-projeto)
 - [Padrão Criacional: Builder](#Padrão-Criacional-Builder)
+- [Padrão Estrutural: Flyweight](#Padrão-Estrutural-Flyweight)
 
 ## Sobre o projeto
 O projeto é sobre criação de personagens, de RPG de mesa, de nível 1, utilizando as regras do livro Tormenta20.
 A classe que armazena o personagem, seus atributos, habilidades, vida e mana é Personagem:
 
-```
-
+```c++
 class Personagem {
     public:
         Personagem() {}
@@ -48,7 +48,7 @@ class Personagem {
 
 E essa é a classe que é usada pelo *Personagem*, a classe *Habilidade* 
 
-```
+```c++
 class Habilidade {
     public:
         Habilidade(string nome, string descricacao) {
@@ -79,7 +79,7 @@ E também ele possui os seguintes métodos:
 - **getPersonagem**: para conseguir uma cópia do personagem, sim ele clona o objeto *Personagem*, por enquanto não estou trabalhando com pointers por simplificação, por isso essa abordagem.
 - **Construtor**: é o construtor do *Construtor*, ele recebe o nome do personagem e seus atributos base e adiciona eles no objeto Personagem.
 
-```
+```c++
 class Construtor {
     public:
         Construtor(string nome, int forc, int 
@@ -104,7 +104,7 @@ class Construtor {
 
 ConstrutorHumano sobrescreve os métodos abstratos para aplicar suas regras de vantagem e desvantagem da raça.
 
-```
+```c++
 class ConstrutorHumano: public Construtor {
     public:
         //puxando o construtor do Construtor
@@ -129,7 +129,7 @@ class ConstrutorHumano: public Construtor {
 
 ConstrutorElfo sobrescreve os métodos abstratos para aplicar suas regras de vantagem e desvantagem da raça.
 
-```
+```c++
 class ConstrutorElfo: public Construtor {
     public:
         //puxando o construtor do Construtor
@@ -166,7 +166,7 @@ class ConstrutorElfo: public Construtor {
 O diretor vai ter as profissões Cavaleiro e Ladino.
 A diferença entre profissões, é as habilidades extras (além da habilidade de raça) e a quantidade de vida e mana.
 
-```
+```c++
 class Diretor {
     public:
         void construirCavaleiro(Construtor& builder) {
@@ -207,9 +207,82 @@ class Diretor {
 ```
 > Eu não mostrei o método getModificacaoConstituicao, mas ele é um método da classe Personagem que faz um cálculo para descobrir o "modificador" da constituição.
 ---
-#### Exemplo de criação de personagem
+## Padrão Estrutural: Flyweight
+
+Quanto mais personagens são criados, mais habilidades diferentes precisam ser adicionadas, e vários personagens podem ter a mesma habilidade, que contém um nome e uma grande descrição, ou seja, podemos aproveitar memória de uma habilidade já criada e referenciar ela no novo personagem, basicamente criar um cache de habilidades.
+
+A classe *FlyweightFactoryHabilidade* vai controlar o cache.
+```c++
+//flyweight, a única diferença é que eu n tenho o repeating state
+//apenas o unique state, por isso vou usar um (set) em vez de (map)
+
+class FlyweightFactoryHabilidade {
+    public:
+        const Habilidade* getFlyweight(const Habilidade& habilidade) {
+            /*
+                (insert) insere habilidade, se já existe apenas retorna a 
+                nova alocação dentro do campo (.first)
+            */
+            auto it = cache.insert(habilidade);
+
+            // convertendo first (que é do tipo iterator) para o tipo pointer
+            return &(*it.first);
+        };
+    private: 
+        std::set<Habilidade> cache;
+};
+
+FlyweightFactoryHabilidade ffh;
+```
+
+E como da para ver, fora do bloco da classe eu já inicializo ela para inserir na classe personagem, talvez o jeito mais recomendável de fazer isso seria aplicando o Singleton na classe Personagem, mas para simplificar um pouco fiz desse jeito.
+
+Modificações na classe Habilidade:
+```c++
+class Habilidade {
+    public:
+        
+        ...
+        
+        /*
+            Operação usada pelo SET, para calcular a ordem para por os elementos de Habilidade
+        */
+        bool operator<(const Habilidade& hab) const {
+            return nome < hab.nome;
+        }
+};
+```
+o operator< definine como o operador < é calculado quando utilizado em duas classes *Habilidade*, nesse caso eu apenas me importei com o nome da habilidade, e não com a descrição.
+
+Modificações na classe Personagem:
+
+```c++
+class Personagem {
+    public:
+        Personagem(): ffh(::ffh) {}
+
+        ...
+        
+        void addHabilidade(const Habilidade& hab) {
+            const Habilidade* pointerHabilidade = ffh.getFlyweight(hab);
+
+            habilidades.push_back(pointerHabilidade);
+
+        };
+
+        ...
+        FlyweightFactoryHabilidade& ffh;
+    private:
+        ...
+        std::vector<const Habilidade*> habilidades;
+
 
 ```
+> Agora o Vector de habilidades, guarda somente o pointer para onde a habilidade é realmente guardada e armazenada. (Tanto que na função imprimir, também foi alterado o '.nome' para '->nome', para deferenciar o pointer e acessar o real valor)
+---
+#### Exemplo de criação de personagem
+
+```c++
 int main() {
     ConstrutorHumano cc1("Vander", 15, 10, 18, 10, 12, 12);
     Diretor d1;

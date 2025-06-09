@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include <set>
 
 // enum Atributos {
 //     FORCA,
@@ -29,11 +30,38 @@ class Habilidade {
         }
         std::string nome;
         std::string descricao;
+
+        /*
+            Operação usada pelo SET, para calcular a ordem para por os elementos de Habilidade
+        */
+        bool operator<(const Habilidade& hab) const {
+            return nome < hab.nome;
+        }
 };
+
+//flyweight, a única diferença é que eu n tenho o repeating state
+//apenas o unique state, por isso vou usar um (set) em vez de (map)
+class FlyweightFactoryHabilidade {
+    public:
+        const Habilidade* getFlyweight(const Habilidade& habilidade) {
+            /*
+                (insert) insere habilidade, se já existe apenas retorna a 
+                nova alocação dentro do campo (.first)
+            */
+            auto it = cache.insert(habilidade);
+
+            // convertendo first (que é do tipo iterator) para o tipo pointer
+            return &(*it.first);
+        };
+    private: 
+        std::set<Habilidade> cache;
+};
+
+FlyweightFactoryHabilidade ffh;
 
 class Personagem {
     public:
-        Personagem() {}
+        Personagem(): ffh(::ffh) {}
         void imprimir() {
             std::cout << "--------\n";
             std::cout << "Nome: " << nome << "\n"
@@ -49,8 +77,8 @@ class Personagem {
             << "----\n"
             << "Habilidades: \n";
 
-            for(const Habilidade& hab: habilidades) {
-                std::cout << "nome: " << hab.nome << "\ndescrição: " << hab.descricao << "\n\n";
+            for(const Habilidade* hab: habilidades) {
+                std::cout << "nome: " << hab->nome << "\ndescrição: " << hab->descricao << "\n\n";
             }
 
             std::cout << "--------\n";
@@ -63,8 +91,11 @@ class Personagem {
             this->sabedoria = sabe;
             this->carisma = cari;
         };
-        void addHabilidade(Habilidade hab) {
-            habilidades.push_back(hab);
+        void addHabilidade(const Habilidade& hab) {
+            const Habilidade* pointerHabilidade = ffh.getFlyweight(hab);
+
+            habilidades.push_back(pointerHabilidade);
+
         };
         int getModificacaoForca() {
             return getModificacador(forca);
@@ -97,11 +128,13 @@ class Personagem {
         
         int vida;
         int mana;
+
+        FlyweightFactoryHabilidade& ffh;
     private:
         int getModificacador(int valor) {
             return floor((float)(valor - 10) / 2);
         }
-        std::vector<Habilidade> habilidades;  
+        std::vector<const Habilidade*> habilidades;  
 };
 
 class Construtor {
@@ -113,7 +146,7 @@ class Construtor {
         virtual void setRaca() = 0;
         virtual void produzirAtributos() = 0;
         virtual void produzirHabilidadesRaca() = 0;
-        void adicionarHabilidadeExtra(Habilidade hab) {
+        void adicionarHabilidadeExtra(const Habilidade& hab) {
             personagem.addHabilidade(hab);
         };
         Personagem getPersonagem() {
@@ -212,7 +245,7 @@ int main() {
     
     Personagem p1 = cc1.getPersonagem();
     p1.imprimir();
-
+    
     ConstrutorElfo ce1("Estes", 10, 13, 10, 18, 17, 11);
     d1.construirLadino(ce1);
     Personagem p2 = ce1.getPersonagem();

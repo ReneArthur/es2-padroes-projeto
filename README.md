@@ -418,7 +418,7 @@ Está no arquivo ./test/teste.cpp
 
 ## Comandos para compilar
 
-É necessário instalar Cmake.
+É necessário instalar Cmake. E um compilador de c++ como o "g++" ou "Microsoft C++ Compiler".
 
 Na raíz do projeto rode um por vez:
 
@@ -444,5 +444,10 @@ E para executar o main onde irá imprimir um personagem no console e criar dois 
 ```
 > ou execute esse arquivo "rooster" dentro do build diretamente
 
+Se você usou o "Microsoft C++ Compiler" o arquivo executável vai estar em /Debug/rooster.exe
+```
+cd Debug
+rooster.exe
+```
 
 ---

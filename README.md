@@ -6,6 +6,13 @@ Linguagem escolhida: C++
 - [Sobre o projeto](#Sobre-o-projeto)
 - [Padrão Criacional: Builder](#Padrão-Criacional-Builder)
 - [Padrão Estrutural: Flyweight](#Padrão-Estrutural-Flyweight)
+- [Padrão Comportamental: Visitor](#Padrão-Comportamental-Visitor)
+- [Execução do código: Main](#Execução-do-código-Main)
+- [Testes](#Testes)
+- [Comandos para compilar](#Comandos-para-compilar)
+
+
+>Observação: O código dentro de classes no final foi alterado para definição de classe e implementação em arquivos separados, para fazer o build de forma correta.
 
 ## Sobre o projeto
 O projeto é sobre criação de personagens, de RPG de mesa, de nível 1, utilizando as regras do livro Tormenta20.
@@ -280,17 +287,162 @@ class Personagem {
 ```
 > Agora o Vector de habilidades, guarda somente o pointer para onde a habilidade é realmente guardada e armazenada. (Tanto que na função imprimir, também foi alterado o '.nome' para '->nome', para deferenciar o pointer e acessar o real valor)
 ---
-#### Exemplo de criação de personagem
+## Padrão Comportamental: Visitor
+
+Agora quero adicionar a função de exportar um *Personagem* e também uma *Habilidade*, ou seja, transformar personagem em um arquivo JSON, ou XML, para isso podemos ter uma função dentro de *Personagem* chamada "exportarJSON" e outra chamada "exportarXML", porém além de isso aumentar muito o código, isso não deveria ser a função de *Personagem*, essa classe precisa ter apenas as informações do personagem, aumentar as funções de uma classe não é um bom padrão, pois aumenta a complexidade e dificulta o escalonamento.
+Por isso, vou usar o padrão comportamental Visitor, para separar a lógica de JSON (só fiz JSON mesmo) da classe *Personagem* e *Habilidade*.
+Para isso, adicionei a classe abstrata *Visitor*, para a classe de JSON implementar as funções de conversão de Personagem e Habilidade, e também a *Visitable* para as classes que serão convertidas implementarem e tornarem-se "convertíveis".
+```c++
+class Personagem;
+class Habilidade;
+
+class Visitor {
+    public:
+    virtual void visitPersonagem(const Personagem* p) const = 0;
+    virtual void visitHabilidade(const Habilidade* h) const = 0;
+};
+
+class Visitable {
+    public:
+    virtual void accept(Visitor& v) const = 0;
+};
+```  
+> nota: defini as classes Personagem e Habilidade, sem nada, sem nenhuma implementação. Isso porque o C++ necessita que as classes ou variáveis sejam definidas antes de utilizadas, e *Visitor* precisa de *Personagem* e *Personagem* precisa de *Visitor*, logo para resolver esse problema basta definir a classe utilizada sem nenhuma implementação (por enquanto).
+
+Agora basta adicionar o Visitable nas classes *Personagem* e *Habilidade*
+
+```c++
+class Habilidade: public Visitable {
+    public:
+    ...
+    void accept(Visitor& v) const override {
+        v.visitHabilidade(this);
+    }
+    ...
+};
+
+class Personagem: public Visitable {
+    public:
+        ...
+        void accept(Visitor& v) const override {
+            v.visitPersonagem(this);
+        }
+        ...
+};
+```
+Após tornar as classes "convertíveis", falta apenas criar a lógica em si do JSON.
+
+```c++
+class JSONExportVisitor: public Visitor {
+    private:
+        std::string formatarHabilidade(const Habilidade* hab) const {
+            return "{\"nome\": \"" + hab->nome + "\",\"descricao\": \"" + hab->descricao + "\"}"; 
+        }
+    public:
+    void visitPersonagem(const Personagem* p) const override {
+        std::ofstream arquivo("personagem.json");
+
+        arquivo << "{";
+
+        arquivo << 
+        "\"nome\": \"" << p->nome << "\", "
+        "\"raca\": \"" << p->raca << "\", "
+        "\"atributos\": {"
+            "\"forca\": " << p->forca << ", "
+            "\"destreza\": " << p->destreza << ", "
+            "\"constituicao\": " << p->constituicao << ", "
+            "\"inteligencia\": " << p->inteligencia << ", "
+            "\"sabedoria\": " << p->sabedoria << ", "
+            "\"carisma\": " << p->carisma
+        << "},"
+        "\"vida\": \"" << p->vida << "\", " 
+        "\"mana\": \"" <<  p->mana << "\", "
+        ;
+
+        arquivo << "\"habilidades\": [";
+
+        for(auto habilidade: p->habilidades) {
+            
+            arquivo << formatarHabilidade(habilidade);
+
+            if(habilidade != p->habilidades.back()) {
+                arquivo << ",";
+            }
+        }
+        arquivo << "]";
+
+        arquivo << "}";
+        arquivo.close();
+    }
+    void visitHabilidade(const Habilidade* const h) const override {
+        std::ofstream arquivo("habilidade.json");
+        arquivo << formatarHabilidade(h);
+        arquivo.close();
+    }
+};
+
+```
+
+
+## Execução do código: Main
 
 ```c++
 int main() {
+
     ConstrutorHumano cc1("Vander", 15, 10, 18, 10, 12, 12);
     Diretor d1;
     d1.construirCavaleiro(cc1);
-
+    
     Personagem p1 = cc1.getPersonagem();
     p1.imprimir();
+    
+    ConstrutorElfo ce1("Estes", 10, 13, 10, 18, 17, 11);
+    d1.construirLadino(ce1);
+    Personagem p2 = ce1.getPersonagem();
+    p2.imprimir();
+
+    JSONExportVisitor jev;
+    p2.accept(jev);
+    p2.habilidades.at(0)->accept(jev);
 
     return 0;
 }
+
 ```
+
+## Testes
+
+Eu fiz 5 testes, 4 para criação de personagem e validação se a vida e a mana estão sendo calculados corretamente. E 1 para testar se o padrão estrutural *Flyweight* que é o que guarda as habilidades em Cache realmente estava funcionando
+
+Está no arquivo ./test/teste.cpp
+
+## Comandos para compilar
+
+É necessário instalar Cmake.
+
+Na raíz do projeto rode um por vez:
+
+```
+cmake -S . -B build
+```
+
+```
+cd build
+```
+
+```
+cmake --build .
+```
+Agora para rodar os testes você executa esse comando:
+```
+ctest
+```
+
+E para executar o main onde irá imprimir um personagem no console e criar dois arquivos json, "habilidades.json" e "personagem.json", execute:
+```
+./rooster
+```
+> ou execute esse arquivo "rooster" dentro do build diretamente
+
+
+---
